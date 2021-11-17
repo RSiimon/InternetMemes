@@ -7,8 +7,13 @@ Members: Egle Saks, Kristjan Lõhmus, Marilin Moor, Renata Siimon
 
 Prerequisites: 
 * Docker desktop installed and running (https://www.docker.com/products/docker-desktop)
+* Git installed (https://git-scm.com/downloads)
+* Private ssh key added to github (https://medium.com/chaya-thilakumara/tortoisegit-how-to-create-and-upload-your-public-key-to-github-884b7b619329)
 
 Steps:
+* Open/navigate to the folder you want to add your project to and open terminal
+* Run `git clone git@github.com:RSiimon/InternetMemes.git`
+* Open the project in your favorite IDE
 * Run `docker-compose up`
 * Navigate to `localhost:8080`
 * Login with `airflow` & `airflow` credentials
