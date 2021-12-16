@@ -382,7 +382,9 @@ df_search.to_json(path_to_cleaned + 'search_keywords.json', force_ascii=False, o
 textual_df.to_csv(path_to_cleaned + 'textual_df.csv', sep=';', index=True, encoding='utf-8') 
 refs_df.to_csv(path_to_cleaned + 'refs_df.csv', sep=';', index=True, encoding='utf-8')   
 
-
+# df main, without lists:
+df_main = df_main.drop(columns = ['alt_img_urls', 'similar_images', 'similar_images2', 'image_recogn_labels', 'image_recogn_scores', 'search_keywords'])
+df_main.to_csv(path_to_cleaned + 'main_df.csv', sep=';', index=True, encoding='utf-8') 
 
 
 

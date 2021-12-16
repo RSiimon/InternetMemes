@@ -4844,9 +4844,6 @@
 4843,https://knowyourmeme.com/memes/it-s-my-first-time,200,15364,onion-syrup,brad--12,2015-03-19,2020-01-06
 4844,https://knowyourmeme.com/memes/post-anesthesia-videos,200,11233,don--22,brad--12,2015-03-20,2020-09-08
 4845,https://knowyourmeme.com/memes/lebron-james-kid,200,82708,lnh,sophie--8,2015-03-22,2021-01-08
-4843,https://knowyourmeme.com/memes/it-s-my-first-time,200,15364,onion-syrup,brad--12,2015-03-19,2020-01-06
-4844,https://knowyourmeme.com/memes/post-anesthesia-videos,200,11233,don--22,brad--12,2015-03-20,2020-09-08
-4845,https://knowyourmeme.com/memes/lebron-james-kid,200,82708,lnh,sophie--8,2015-03-22,2021-01-08
 4846,https://knowyourmeme.com/memes/zomboy-terror-squad,200,3307,onemillionbucks,synge,2015-03-19,2018-07-17
 4847,https://knowyourmeme.com/memes/okaymovement,200,32234,don--22,don--22,2015-03-18,2021-03-31
 4848,https://knowyourmeme.com/memes/pokemon-variants,200,27121,lycanroc,lycanroc,2015-03-23,2021-06-25
@@ -11965,7 +11962,6 @@
 11961,https://knowyourmeme.com/memes/i-can-t-let-you-do-that-starfox,200,101739,tehsofia,z--4,2009-06-20,2021-05-05
 11962,https://knowyourmeme.com/memes/caipirinha-dance,200,108613,beesandjam-d,mona_jpn,2009-06-19,2021-11-22
 11963,https://knowyourmeme.com/memes/where-the-hell-is-matt,200,44095,brad--12,james--11,2009-06-26,2018-07-17
-11964,https://knowyourmeme.com/memes/you-sir-are-and-idiot,200,100109,drifter,lnh,2009-06-18,2019-12-16
 11964,https://knowyourmeme.com/memes/you-sir-are-and-idiot,200,100109,drifter,lnh,2009-06-18,2019-12-16
 11965,https://knowyourmeme.com/memes/do-you-a-faggot,200,8370,wobbuffet19,wobbuffet19,2009-06-19,2018-07-17
 11966,https://knowyourmeme.com/memes/pete-hoekstra,200,3530,yergi,captain-blubber--5,2009-06-18,2018-07-17

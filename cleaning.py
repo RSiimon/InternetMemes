@@ -9,11 +9,22 @@ import json
 import datetime
 from datetime import date
 import re
+import os
 
 
 path_to_data = "data//"  
 path_to_cleaned = "cleaned_data//tmp_with_lists//"
+path_to_cleaned2 = "cleaned_data//"
 fname = "kym.json"
+
+# ------------------------------------
+
+# Make folders for cleaned data if they dont exist:
+if path_to_cleaned2[:-2] not in os.listdir():
+    os.mkdir(path_to_cleaned2)
+    os.mkdir(path_to_cleaned)
+    
+# ------------------------------------
 
 # Loading data
 with open(path_to_data + fname) as f:
@@ -42,6 +53,34 @@ ids_short = pd.Series([x.split('/')[-1] for x in df['url'].tolist()])
 dropped =  ids_short.sort_values()[:16].index.tolist() 
 dropped+=[12122, 10998]
 df = df.drop(dropped)
+
+# Drop 6 memes with no autors (i.e where server returned code 404 to web crawler); checked those 6 pages and indeed they were no longer available:
+dropped2=['https://knowyourmeme.com/memes/temmie', 
+          'https://knowyourmeme.com/memes/its-all-mtv', 
+          'https://knowyourmeme.com/memes/x-sells-everything-to-y', 
+          'https://knowyourmeme.com/memes/ap-gibralter', 
+          'https://knowyourmeme.com/memes/chili-can-be-served-with-cheese', 
+          'https://knowyourmeme.com/memes/hyakugojyuuichi--2'] 
+
+# Leave out memes with no description (added later):
+dropped2+=['https://knowyourmeme.com/memes/tequila-heineken-pas-ltemps-dniaiser', 
+           'https://knowyourmeme.com/memes/schismatic-pony', 
+           'https://knowyourmeme.com/memes/gaul-laughing-stock', 
+           'https://knowyourmeme.com/memes/texting-etiquette', 
+           'https://knowyourmeme.com/memes/got-my-nugs', 
+           'https://knowyourmeme.com/memes/dj-jesus-the-god-of-electronic-music', 
+           'https://knowyourmeme.com/memes/theflyingcamel', 
+           'https://knowyourmeme.com/memes/beauty-pageant-reaction', 
+           'https://knowyourmeme.com/memes/boom-boom-boom-mohammed', 
+           'https://knowyourmeme.com/memes/van-persie-fall', 
+           'https://knowyourmeme.com/memes/bad-romance-fail', 
+           'https://knowyourmeme.com/memes/my-foot', 
+           'https://knowyourmeme.com/memes/azerbaijan-dance']
+
+df = df[df['url'].isin(dropped2)==False]
+
+
+ids_short = pd.Series([x.split('/')[-1] for x in df['url'].tolist()])
 
 # Saving id column for joining:
 id_df = df[["url"]] 
@@ -683,15 +722,12 @@ refs_df.to_csv(path_to_cleaned + 'refs_df.csv', sep=';', index=True, encoding='u
 relations_df.to_csv(path_to_cleaned + 'relations_df.csv', sep=';', index=True, encoding='utf-8') 
 textual_df.to_csv(path_to_cleaned + 'textual_df.csv', sep=';', index=True, encoding='utf-8') 
 
-# Load data:
-# df = pd.read_csv('main_df.csv', sep=';', index_col=0, encoding='utf-8')   
 
 # -----------------------------------------
 
 # # Was used for web scraping:
-# id_df = df[["url"]] 
-# id_df.to_excel(path_to_cleaned + "id_df.xlsx")
-
+id_df = df[["url"]] 
+id_df.to_excel(path_to_cleaned + "id_df.xlsx")
 
 
 
