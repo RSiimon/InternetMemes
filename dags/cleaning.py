@@ -14,6 +14,7 @@ import warnings
 from cleaning1 import cleaning_1
 from cleaning2 import cleaning_2
 from cleaning3 import cleaning_3
+from add_authors import add_authors
 
 warnings.filterwarnings('ignore')
 
@@ -68,12 +69,22 @@ clean_third = PythonOperator(
     depends_on_past=False,
 )
 
+add_authors = PythonOperator(
+    task_id='add_authors',
+    dag=cleaning_dag,
+    python_callable=add_authors,
+    trigger_rule='all_success',
+    depends_on_past=False,
+)
+
+
 START = BashOperator(task_id='create_dir',
-                  bash_command="cd /opt/airflow/dags/data/ ; mkdir -p cleaned_data ; mkdir -p json_data ; mkdir tmp", dag=cleaning_dag)
+                  bash_command="cd /opt/airflow/dags/data/ ; mkdir -p cleaned_data ; mkdir -p json_data ; "
+                               "mkdir -p tmp; mkdir -p final_data", dag=cleaning_dag)
 
 COMPLETE = DummyOperator(
     task_id='end_pipeline',
     dag=cleaning_dag
 )
 
-START >> clean_first >> clean_second >> clean_third >> COMPLETE
+START >> add_authors >> COMPLETE
