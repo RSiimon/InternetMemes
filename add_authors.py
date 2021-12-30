@@ -140,7 +140,7 @@ df = exclude_persons(df, 'updater', exclude_auth)
 # faulty
 # [2043, 6433, 7631, 9445, 9805, 11087]  -> checked: pages of those memes no longer exist 
 
-# -> Dropped those 6 memes in cleaning.py. (Otherwise we would need to load  all tables and jsons here, only just to leave out those 6 memes, and then save them again. No need to repeat the code - can be done earlier.)
+# -> Dropped those 6 memes in cleaning1.py. (Otherwise we would need to load  all tables and jsons here, only just to leave out those 6 memes, and then save them again. No need to repeat the code - can be done earlier.)
 
 
 # ---------------------------------------------

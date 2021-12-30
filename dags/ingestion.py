@@ -2,6 +2,7 @@ import datetime
 
 import airflow
 import requests
+from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from faker import Faker
 import os
@@ -16,6 +17,7 @@ warnings.filterwarnings('ignore')
 
 fake = Faker()
 log_tag = "[INGESTION] "
+data_source = '/opt/airflow/dags/data/'
 target_1 = "kym.json"
 target_2 = "kym_spotlight.json"
 target_3 = "kym_vision.json"
@@ -49,10 +51,10 @@ def download_file(target):
     print(log_tag + "Started the download file function with target:", target)
 
     file_valid = True
-    if os.path.isfile(target):
+    if os.path.isfile(data_source + target):
         print(log_tag + "File already exists, skipping this part")
         file_valid = False
-    with open(target, 'w+') as f:
+    with open(data_source + target, 'w+') as f:
         if len(f.readlines()) == 0:
             file_valid = False
             print(log_tag + "File empty, overwriting")
@@ -61,7 +63,7 @@ def download_file(target):
         r = requests.get(base_url + target, allow_redirects=True)
         print(log_tag + "Got response from URL:", r.status_code)
         print(log_tag + "Check the data pulled", r.json()[0])
-        with open(target, 'w+', encoding='utf-8') as f:
+        with open(data_source + target, 'w+', encoding='utf-8') as f:
             json.dump(r.json(), f, ensure_ascii=False)
             print(log_tag + "Dumped json into the file")
 
@@ -71,17 +73,17 @@ def write_to_mongo():
     Inserts downloaded file into mongoDB
     """
 
-    with open(target_1, 'r+', encoding='utf-8') as f:
+    with open(data_source + target_1, 'r+', encoding='utf-8') as f:
         data = json.load(f)
         collection_1.insert_many(data)
         print(log_tag, "Test if the data is present:", db.kym.find_one())
 
-    with open(target_2, 'r+', encoding='utf-8') as f:
+    with open(data_source + target_2, 'r+', encoding='utf-8') as f:
         data = json.load(f)
         collection_2.insert_many(data)
         print(log_tag, "Test if the data is present:", db.kym_spotlight.find_one())
 
-    with open(target_3, 'r+', encoding='utf-8') as f:
+    with open(data_source + target_3, 'r+', encoding='utf-8') as f:
         data = json.load(f)
         collection_2.insert_many(data)
         print(log_tag, "Test if the data is present:", db.kym_vision.find_one())
@@ -126,10 +128,9 @@ write_mongo = PythonOperator(
     trigger_rule='all_success',
     depends_on_past=False,
 )
-START = DummyOperator(
-    task_id='start_pipeline',
-    dag=ingestion_dag
-)
+START = BashOperator(task_id='create_dir',
+                  bash_command="cd /opt/airflow/dags/ ; mkdir -p data", dag=ingestion_dag)
+
 COMPLETE = DummyOperator(
     task_id='end_pipeline',
     dag=ingestion_dag
