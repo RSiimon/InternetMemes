@@ -13,7 +13,7 @@ fname_rel = 'relations_df.csv'
 fname_textual = 'textual_df.csv'
 fname_vision = 'vision_annot_df.csv'
 
-
+from variables import data_source_raw, data_source_cleaned, data_source_json, data_source_tmp
 # Convert columns containing lists from str to list:
 def convert_list_col(col, df2):
     col_list = df2[col].tolist()
@@ -29,12 +29,12 @@ def convert_list_col(col, df2):
 
 def cleaning_3():
     # Loading data
-    df = pd.read_json(fname, orient='index')
-    df_main = pd.read_csv(fname_main_df, sep=';', index_col=0, encoding='utf-8')
-    refs_df = pd.read_csv(fname_refs, sep=';', index_col=0, encoding='utf-8')
-    relations_df = pd.read_csv(fname_rel, sep=';', index_col=0, encoding='utf-8')
-    textual_df = pd.read_csv(fname_textual, sep=';', index_col=0, encoding='utf-8')
-    vision_annot_rev_df = pd.read_csv(fname_vision, sep=';', index_col=0, encoding='utf-8')
+    df = pd.read_json(data_source_raw + fname, orient='index')
+    df_main = pd.read_csv(data_source_cleaned + fname_main_df, sep=';', index_col=0, encoding='utf-8')
+    refs_df = pd.read_csv(data_source_cleaned + fname_refs, sep=';', index_col=0, encoding='utf-8')
+    relations_df = pd.read_csv(data_source_cleaned + fname_rel, sep=';', index_col=0, encoding='utf-8')
+    textual_df = pd.read_csv(data_source_cleaned + fname_textual, sep=';', index_col=0, encoding='utf-8')
+    vision_annot_rev_df = pd.read_csv(data_source_cleaned + fname_vision, sep=';', index_col=0, encoding='utf-8')
 
     df_main = convert_list_col('similar_images', df_main)
     df_main = convert_list_col('similar_images2', df_main)
@@ -328,12 +328,12 @@ def cleaning_3():
 
     # TEMPORARY TABLES CONTAINING LISTS (MAYBE BETTER TO GET OVERVIEW):
 
-    df_main.to_csv('main_df.csv', sep=';', index=True, encoding='utf-8')
-    refs_df.to_csv('refs_df.csv', sep=';', index=True, encoding='utf-8')
-    relations_df.to_csv('relations_df.csv', sep=';', index=True, encoding='utf-8')
-    textual_df.to_csv('textual_df.csv', sep=';', index=True, encoding='utf-8')
-    vision_annot_rev_df.to_csv('vision_annot_df.csv', sep=';', index=True, encoding='utf-8')
-    DBpedia_df.to_csv('DBpedia_df.csv', sep=';', index=True, encoding='utf-8')
+    df_main.to_csv(data_source_tmp + 'main_df.csv', sep=';', index=True, encoding='utf-8')
+    refs_df.to_csv(data_source_tmp + 'refs_df.csv', sep=';', index=True, encoding='utf-8')
+    relations_df.to_csv(data_source_tmp + 'relations_df.csv', sep=';', index=True, encoding='utf-8')
+    textual_df.to_csv(data_source_tmp + 'textual_df.csv', sep=';', index=True, encoding='utf-8')
+    vision_annot_rev_df.to_csv(data_source_tmp + 'vision_annot_df.csv', sep=';', index=True, encoding='utf-8')
+    DBpedia_df.to_csv(data_source_tmp +'DBpedia_df.csv', sep=';', index=True, encoding='utf-8')
 
     # -----------------------------------------------
 
@@ -348,17 +348,17 @@ def cleaning_3():
     # DBpedia_df -> only json
 
     # relations_df:  (lists: 'children', 'siblings', str: parent)
-    relations_df.to_json('relations.json', force_ascii=False, orient='index')  # orient = 'columns'
+    relations_df.to_json(data_source_json + 'relations.json', force_ascii=False, orient='index')  # orient = 'columns'
     # {meme_id: {'parent': 'shock-sites', 'children': [..], 'siblings': [...]},
     # ... }
 
     # DBpedia_df:  'keywords', 'scores', 'links' (all lists)
-    DBpedia_df.to_json('DBpedia.json', force_ascii=False, orient='index')
+    DBpedia_df.to_json(data_source_json + 'DBpedia.json', force_ascii=False, orient='index')
     # {meme_id: {'keywords': [...], 'scores': [...], 'links': [...]},
     # ... }
 
     # vision_annot_rev_df:  'memes', 'scores' (all lists)
-    vision_annot_rev_df.to_json('vision_annot.json', force_ascii=False, orient='index')
+    vision_annot_rev_df.to_json(data_source_json + 'vision_annot.json', force_ascii=False, orient='index')
     # {keyword: {'memes': [meme_id1, meme_id2, ...], 'scores': [...]},
     # ... }
 
@@ -366,29 +366,29 @@ def cleaning_3():
     #  'alt_img_urls', 'similar_images', 'similar_images2', 'image_recogn_labels', 'image_recogn_scores', 'search_keywords'
     df_similar_img_urls = df_main[['similar_images', 'similar_images2']]
     df_similar_img_urls = df_similar_img_urls.dropna(axis=0, how='all')
-    df_similar_img_urls.to_json('similar_img_urls.json', force_ascii=False, orient='index')
+    df_similar_img_urls.to_json(data_source_json + 'similar_img_urls.json', force_ascii=False, orient='index')
     # {meme_id: {'similar_images': [...], 'similar_images2': [...]},
     # ... }
 
     df_image_recogn = df_main[['image_recogn_labels', 'image_recogn_scores']]
-    df_image_recogn.to_json('image_recogn.json', force_ascii=False, orient='index')
+    df_image_recogn.to_json(data_source_json + 'image_recogn.json', force_ascii=False, orient='index')
     # {meme_id: {'image_recogn_labels': [...], 'image_recogn_scores': [...]},
     # ... }
 
     df_alternative_urls = df_main[['alt_img_urls']]  # missing values
     df_alternative_urls = df_alternative_urls.dropna(axis=0, how='all')
-    df_alternative_urls.to_json('alternative_urls.json', force_ascii=False,
+    df_alternative_urls.to_json(data_source_json + 'alternative_urls.json', force_ascii=False,
                                 orient='columns')  # 'index'
 
     df_search = df_main[['search_keywords']]
-    df_search.to_json('search_keywords.json', force_ascii=False, orient='columns')
+    df_search.to_json(data_source_json + 'search_keywords.json', force_ascii=False, orient='columns')
 
     # No lists in: refs_df, textual_df:
-    textual_df.to_csv('textual_df.csv', sep=';', index=True, encoding='utf-8')
-    refs_df.to_csv('refs_df.csv', sep=';', index=True, encoding='utf-8')
+    textual_df.to_csv(data_source_json + 'textual_df.csv', sep=';', index=True, encoding='utf-8')
+    refs_df.to_csv(data_source_json + 'refs_df.csv', sep=';', index=True, encoding='utf-8')
 
     # df main, without lists:
     df_main = df_main.drop(
         columns=['alt_img_urls', 'similar_images', 'similar_images2', 'image_recogn_labels', 'image_recogn_scores',
                  'search_keywords'])
-    df_main.to_csv('main_df.csv', sep=';', index=True, encoding='utf-8')
+    df_main.to_csv(data_source_json + 'main_df.csv', sep=';', index=True, encoding='utf-8')

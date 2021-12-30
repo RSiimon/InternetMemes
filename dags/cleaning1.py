@@ -10,8 +10,9 @@ import datetime
 from datetime import date
 import re
 
+from variables import data_source_raw, data_source_cleaned
+
 fname = "kym.json"
-data_source = '/opt/airflow/dags/'
 
 default_args_dict = {
     'start_date': airflow.utils.dates.days_ago(0),
@@ -30,7 +31,7 @@ def cleaning_1():
     # ------------------------------------
 
     # Loading data
-    with open(data_source + fname) as f:
+    with open(data_source_raw + fname) as f:
         data = json.load(f)
 
     df = pd.DataFrame(data)
@@ -725,13 +726,13 @@ def cleaning_1():
 
     # SAVE ALL:
 
-    df.to_csv('main_df.csv', sep=';', index=True, encoding='utf-8')
-    refs_df.to_csv('refs_df.csv', sep=';', index=True, encoding='utf-8')
-    relations_df.to_csv('relations_df.csv', sep=';', index=True, encoding='utf-8')
-    textual_df.to_csv('textual_df.csv', sep=';', index=True, encoding='utf-8')
+    df.to_csv(data_source_cleaned + 'main_df.csv', sep=';', index=True, encoding='utf-8')
+    refs_df.to_csv(data_source_cleaned + 'refs_df.csv', sep=';', index=True, encoding='utf-8')
+    relations_df.to_csv(data_source_cleaned + 'relations_df.csv', sep=';', index=True, encoding='utf-8')
+    textual_df.to_csv(data_source_cleaned + 'textual_df.csv', sep=';', index=True, encoding='utf-8')
 
     # -----------------------------------------
 
     # # Was used for web scraping:
     id_df = df[["url"]]
-    id_df.to_csv("id_df.csv")
+    id_df.to_csv(data_source_cleaned + "id_df.csv")

@@ -1,6 +1,7 @@
 import datetime
 
 import airflow
+from airflow.operators.bash import BashOperator
 from airflow.operators.dummy import DummyOperator
 from faker import Faker
 from airflow import DAG
@@ -67,14 +68,12 @@ clean_third = PythonOperator(
     depends_on_past=False,
 )
 
-START = DummyOperator(
-    task_id='start_pipeline',
-    dag=cleaning_dag
-)
+START = BashOperator(task_id='create_dir',
+                  bash_command="cd /opt/airflow/dags/data/ ; mkdir -p cleaned_data ; mkdir -p json_data ; mkdir tmp", dag=cleaning_dag)
 
 COMPLETE = DummyOperator(
     task_id='end_pipeline',
     dag=cleaning_dag
 )
 
-START >> clean_second >> clean_third >> COMPLETE
+START >> clean_first >> clean_second >> clean_third >> COMPLETE

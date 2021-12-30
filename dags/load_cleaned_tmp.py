@@ -6,7 +6,7 @@ import json
 import datetime
 from datetime import date
 
-path_to_data = "data//"  
+path_to_data = "../data//"
 path_to_cleaned = "cleaned_data//"
 path_to_cleaned_tmp = "cleaned_data//tmp_with_lists//"
 

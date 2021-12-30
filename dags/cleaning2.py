@@ -5,6 +5,8 @@
 import numpy as np
 import pandas as pd
 
+from variables import data_source_raw, data_source_cleaned
+
 fname = "kym_vision.json"
 fname_main_df = 'main_df.csv'
 fname_refs = 'refs_df.csv'
@@ -56,23 +58,42 @@ def drop_values(df2, col, dropped):
     return df2
 
 
+def collect_urls(df2, include_kym, max_urls):
+    urls = []
+    for i, row in enumerate(df2):
+        if isinstance(row, list) and len(row) != 0:
+            counts = 0
+            row_urls = []
+            for el in row:  # dict
+                link = el['url']
+                if not include_kym:
+                    if "kym-cdn" not in link:
+                        row_urls.append(link)
+                        counts += 1
+                else:
+                    row_urls.append(link)
+                    counts += 1
+                if counts == max_urls:
+                    break
+            if len(row_urls) != 0:
+                urls.append(row_urls)
+            else:
+                urls.append(np.nan)
+        else:
+            urls.append(np.nan)
+    return urls
+
+
 def cleaning_2():
     """
 
     :return:
     """
-    # Loading data
-    from os import walk
-
-    import os
-    files = [f for f in os.listdir('.') if os.path.isfile(f)]
-    for f in files:
-        print("THIS IS A FILE:" + f)
-    df = pd.read_json(fname, orient='index')
-    df_main = pd.read_csv(fname_main_df, sep=';', index_col=0, encoding='utf-8')
-    refs_df = pd.read_csv(fname_refs, sep=';', index_col=0, encoding='utf-8')
-    relations_df = pd.read_csv(fname_rel, sep=';', index_col=0, encoding='utf-8')
-    textual_df = pd.read_csv(fname_textual, sep=';', index_col=0, encoding='utf-8')
+    df = pd.read_json(data_source_raw + fname, orient='index')
+    df_main = pd.read_csv(data_source_cleaned + fname_main_df, sep=';', index_col=0, encoding='utf-8')
+    refs_df = pd.read_csv(data_source_cleaned + fname_refs, sep=';', index_col=0, encoding='utf-8')
+    relations_df = pd.read_csv(data_source_cleaned + fname_rel, sep=';', index_col=0, encoding='utf-8')
+    textual_df = pd.read_csv(data_source_cleaned + fname_textual, sep=';', index_col=0, encoding='utf-8')
 
     df_main = convert_list_col('similar_images', df_main)
     df_main = convert_list_col('type', df_main)
@@ -260,11 +281,6 @@ def cleaning_2():
     # WEB DETECTION COLUMN:
 
     df_web = df['webDetection'].apply(pd.Series)
-
-    df_web.columns
-    # ['bestGuessLabels', 'fullMatchingImages', 'pagesWithMatchingImages',
-    #        'partialMatchingImages', 'visuallySimilarImages', 'webEntities']
-
     # ----------------
 
     # - BEST GUESS LABELS
@@ -358,35 +374,6 @@ def cleaning_2():
     df_wmatch = df_web['fullMatchingImages'].tolist()
     df_wmatch3 = df_web['partialMatchingImages'].tolist()
 
-    def collect_urls(df2, include_kym, max_urls):
-        # df2 = wsim
-        urls = []
-        for i, row in enumerate(df2):
-            # i = 0
-            # row = df2[0]
-            if isinstance(row, list) == True and len(row) != 0:
-                counts = 0
-                row_urls = []
-                for el in row:  # dict
-                    # el = row[0]
-                    link = el['url']
-                    if include_kym == False:
-                        if "kym-cdn" not in link:
-                            row_urls.append(link)
-                            counts += 1
-                    else:
-                        row_urls.append(link)
-                        counts += 1
-                    if counts == max_urls:
-                        break
-                if len(row_urls) != 0:
-                    urls.append(row_urls)
-                else:
-                    urls.append(np.nan)
-            else:
-                urls.append(np.nan)
-        return urls
-
     urls = collect_urls(df_wmatch, False, 6)
     urls2 = collect_urls(df_wmatch3, False, 6)
     urls3 = []
@@ -461,11 +448,11 @@ def cleaning_2():
 
     # SAVE ALL:
 
-    df_main.to_csv('main_df.csv', sep=';', index=True, encoding='utf-8')
-    refs_df.to_csv('refs_df.csv', sep=';', index=True, encoding='utf-8')
-    relations_df.to_csv('relations_df.csv', sep=';', index=True, encoding='utf-8')
-    textual_df.to_csv('textual_df.csv', sep=';', index=True, encoding='utf-8')
-    vision_annot_rev_df.to_csv('vision_annot_df.csv', sep=';', index=True, encoding='utf-8')
+    df_main.to_csv(data_source_cleaned + 'main_df.csv', sep=';', index=True, encoding='utf-8')
+    refs_df.to_csv(data_source_cleaned + 'refs_df.csv', sep=';', index=True, encoding='utf-8')
+    relations_df.to_csv(data_source_cleaned + 'relations_df.csv', sep=';', index=True, encoding='utf-8')
+    textual_df.to_csv(data_source_cleaned + 'textual_df.csv', sep=';', index=True, encoding='utf-8')
+    vision_annot_rev_df.to_csv(data_source_cleaned + 'vision_annot_df.csv', sep=';', index=True, encoding='utf-8')
 
     # Load data:
     # df = pd.read_csv('main_df.csv', sep=';', index_col=0, encoding='utf-8')
