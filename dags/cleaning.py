@@ -77,14 +77,13 @@ add_authors = PythonOperator(
     depends_on_past=False,
 )
 
-
 START = BashOperator(task_id='create_dir',
-                  bash_command="cd /opt/airflow/dags/data/ ; mkdir -p cleaned_data ; mkdir -p json_data ; "
-                               "mkdir -p tmp; mkdir -p final_data", dag=cleaning_dag)
+                     bash_command="cd /opt/airflow/dags/data/ ; mkdir -p cleaned_data ; mkdir -p json_data ; "
+                                  "mkdir -p tmp; mkdir -p final_data", dag=cleaning_dag)
 
 COMPLETE = DummyOperator(
     task_id='end_pipeline',
     dag=cleaning_dag
 )
 
-START >> add_authors >> COMPLETE
+START >> clean_first >> clean_second >> clean_third >> add_authors >> COMPLETE
