@@ -72,10 +72,15 @@ def _main_changes():
     graph = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), connection_timeout=10000000000000, encrypted = False)
     # main_csv should be in final_data folder
     main_df = pd.read_csv("/opt/airflow/dags/data/final_data/main.csv", encoding='utf-8', index_col=False)
+
     main_df = main_df.dropna()
+    del main_df["description"]
     # creating a column with similar tags as relations_df to get a node connection
-    for i in range(len(main_df)):
-        main_df["meme_name"][i] = main_df["url"][i].split("/")[-1]
+    lst = []
+    for link in list(main_df["url"]):
+        lst.append(link.split("/")[-1])
+        
+    main_df["meme_name"] = lst
     main_df.to_csv("/opt/airflow/dags/data/import/main.csv", encoding='utf-8', index=False) 
 
     # relations.csv should be in final_data folder
