@@ -1,0 +1,3 @@
+SELECT EXTRACT(YEAR FROM added),COUNT(*)
+    FROM memes
+    GROUP BY EXTRACT(YEAR FROM added);
