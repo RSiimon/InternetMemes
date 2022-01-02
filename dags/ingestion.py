@@ -11,6 +11,7 @@ from airflow.operators.python import PythonOperator
 from pymongo import MongoClient
 import json
 
+
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -73,18 +74,24 @@ def write_to_mongo():
 
     with open(data_source_raw + target_1, 'r+', encoding='utf-8') as f:
         data = json.load(f)
+
         collection_1.insert_many(data)
-        print(log_tag, "Test if the data is present:", db.kym.find_one())
+
+        #print(log_tag, "Test if the data is present:", db.kym.find_one())
 
     with open(data_source_raw + target_2, 'r+', encoding='utf-8') as f:
         data = json.load(f)
+
         collection_2.insert_many(data)
-        print(log_tag, "Test if the data is present:", db.kym_spotlight.find_one())
+
+        #print(log_tag, "Test if the data is present:", db.kym_spotlight.find_one())
 
     with open(data_source_raw + target_3, 'r+', encoding='utf-8') as f:
         data = json.load(f)
-        collection_2.insert_many(data)
-        print(log_tag, "Test if the data is present:", db.kym_vision.find_one())
+
+        collection_3.insert_many(data)
+ 
+        #print(log_tag, "Test if the data is present:", db.kym_vision.find_one())
 
 
 read_first = PythonOperator(
