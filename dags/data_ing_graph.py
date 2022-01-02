@@ -79,28 +79,20 @@ def _main_changes():
     lst = []
     for link in list(main_df["url"]):
         lst.append(link.split("/")[-1])
-        
+
     main_df["meme_name"] = lst
     main_df.to_csv("/opt/airflow/dags/data/import/main.csv", encoding='utf-8', index=False) 
 
-    # relations.csv should be in final_data folder
-    relations_df = pd.read_csv("/opt/airflow/dags/data/final_data/relations.csv", encoding='utf-8')
-    relations_df = relations_df.rename(columns={'Unnamed: 0': 'meme_name'})
-    relations_df = relations_df.fillna("unknown")
-    relations_df.to_csv("/opt/airflow/dags/data/import/relations.csv", encoding='utf-8', index=False) 
-    
+
 
     with graph.session(database="neo4j") as session:
         query_main = "LOAD CSV WITH HEADERS FROM file:///main.csv AS csvLine" \
-        "LOAD CSV WITH HEADERS FROM file:///relations.csv AS csvL" \
-        "MERGE (m:Meme {meme_name:csvLine.meme_name, url:csvLine.url, views:toInteger(csvLine.views)})" \
-        "MERGE (p:Meme_parent {parent_name: csvL.parent})" \
-        "MERGE (c:Meme_children {kids: csvL.children})" \
-        "MERGE (s:Meme_siblings {siblings: csvL.siblings})" \
+        "MERGE (m:Meme_name {meme_name:csvLine.meme_name, url:csvLine.url, views:toInteger(csvLine.views)})" \
         "MERGE (a:Meme_author {name: csvLine.author})" \
         "MERGE (r:Recent_update {updated: csvLine.updated})" \
         "MERGE (t:Meme_template {template_image: csvLine.template_image_url})" \
-        "CREATE (m)-[:BELONGS_TO]->(p), (m)-[:IS_RELATED_TO]->(s), (m)-[:IS_PARENT_TO]->(c)" \
+        "MERGE (n:Meme_name {meme_name:csvL.meme_name})" \
+        "CREATE (n)-[:BELONGS_TO]->(p), (n)-[:IS_RELATED_TO]->(s), (n)-[:IS_PARENT_TO]->(c)" \
         "CREATE (a)-[:CREATED]->(m), (m)-[:BASED_ON]->(t), (m)-[:RECENTLY_UPDATED_ON]->(r)"
         
         result = session.run(query_main)
@@ -116,7 +108,79 @@ main_changes = PythonOperator(
     execution_timeout=datetime.timedelta(seconds=4200)
 )
 
+def _relations_changes():
+    graph = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), connection_timeout=10000000000000, encrypted = False)
 
+    # relations.csv should be in final_data folder
+    relations_df = pd.read_csv("/opt/airflow/dags/data/final_data/relations.csv", encoding='utf-8')
+    relations_df = relations_df.rename(columns={'Unnamed: 0': 'meme_name'})
+    relations_df = relations_df.fillna("unknown")
+    relations_df.to_csv("/opt/airflow/dags/data/import/relations.csv", encoding='utf-8', index=False) 
+    
+    with graph.session(database="neo4j") as session:
+
+        query_main = "LOAD CSV WITH HEADERS FROM file:///relations.csv AS csvLine" \
+        "MERGE (p:Meme_parent {parent_name: csvLine.parent})" \
+        "MERGE (c:Meme_children {kids: csvLine.children})" \
+        "MERGE (s:Meme_siblings {siblings: csvLine.siblings})" \
+        "MERGE (m:Meme_name {meme_name:csvLine.meme_name})" \
+        "CREATE (m)-[:BELONGS_TO]->(p), (m)-[:IS_RELATED_TO]->(s), (m)-[:IS_PARENT_TO]->(c)"
+
+        result = session.run(query_main)
+
+relations_changes = PythonOperator(
+    task_id='relations_changes',
+    dag=graph_model_dag,
+    python_callable=_relations_changes,
+    trigger_rule='all_success',
+    depends_on_past=False,
+    execution_timeout=datetime.timedelta(seconds=4200)
+)
+
+def _img_changes():
+    graph = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD), connection_timeout=10000000000000, encrypted = False)
+
+    # img_rec.csv should be in final_data folder
+    imgrec_df= pd.read_csv("/opt/airflow/dags/data/final_data/img_rec.csv", encoding='utf-8')
+    imgrec_df = imgrec_df.rename(columns={'Unnamed: 0': 'meme_name'})
+    imgrec_df = imgrec_df.fillna("unknown")
+
+    memes = imgrec_df["meme_name"].tolist()
+    labels = imgrec_df['image_recogn_labels'].tolist()
+
+    meme_col, label_col = [], []
+
+    for i, meme in enumerate(memes):
+        meme_labels = labels[i].strip("[]'").split("', '")
+
+        for j in range(min(5, len(meme_labels))):
+            meme_col.append(meme)
+            label_col.append(meme_labels[j])
+
+
+    mf = pd.DataFrame()
+    mf["meme_name"] = meme_col
+    mf["image_recogn_labels"] = label_col
+
+    mf.to_csv("/opt/airflow/dags/data/import/img_rec.csv", encoding='utf-8', index=False)
+    
+    with graph.session(database="neo4j") as session:
+        query_main = "LOAD CSV WITH HEADERS FROM file:///img_rec.csv AS csvLine" \
+        "MERGE (m:Meme_name {meme_name:csvLine.meme_name})" \
+        "MERGE (i: image_recogn_labels{image_label_name:csvLine.image_recogn_labels})" \
+        "CREATE (m)-[:CONTAINS_]->(i)"
+
+        result = session.run(query_main)
+
+
+img_changes = PythonOperator(
+    task_id='img_changes',
+    dag=graph_model_dag,
+    python_callable=_img_changes,
+    trigger_rule='all_success',
+    depends_on_past=False,
+    execution_timeout=datetime.timedelta(seconds=4200)
+)    
 
 START = BashOperator(task_id='create_import_dir',
                   bash_command="cd /opt/airflow/dags/data ; mkdir -p import", dag=graph_model_dag)
@@ -127,5 +191,7 @@ COMPLETE = DummyOperator(
 )
 
 START >> connect_first 
-[connect_first] >> main_changes
-main_changes >> COMPLETE
+connect_first >> main_changes
+main_changes >> relations_changes
+relations_changes >> img_changes
+img_changes >> COMPLETE
