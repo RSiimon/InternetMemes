@@ -91,9 +91,7 @@ def _main_changes():
         "MERGE (a:Meme_author {name: csvLine.author})" \
         "MERGE (r:Recent_update {updated: csvLine.updated})" \
         "MERGE (t:Meme_template {template_image: csvLine.template_image_url})" \
-        "MERGE (n:Meme_name {meme_name:csvL.meme_name})" \
-        "CREATE (n)-[:BELONGS_TO]->(p), (n)-[:IS_RELATED_TO]->(s), (n)-[:IS_PARENT_TO]->(c)" \
-        "CREATE (a)-[:CREATED]->(m), (m)-[:BASED_ON]->(t), (m)-[:RECENTLY_UPDATED_ON]->(r)"
+        "CREATE (m)-[:IS_CREATED_BY]->(a), (m)-[:BASED_ON]->(t), (m)-[:RECENTLY_UPDATED_ON]->(r)"
         
         result = session.run(query_main)
         print("ok")
@@ -115,16 +113,40 @@ def _relations_changes():
     relations_df = pd.read_csv("/opt/airflow/dags/data/final_data/relations.csv", encoding='utf-8')
     relations_df = relations_df.rename(columns={'Unnamed: 0': 'meme_name'})
     relations_df = relations_df.fillna("unknown")
-    relations_df.to_csv("/opt/airflow/dags/data/import/relations.csv", encoding='utf-8', index=False) 
+
+    del relations_df["children"]
+
+    memes = relations_df["meme_name"].tolist()
+    siblings = relations_df["siblings"].tolist()
+    parents = relations_df["parent"].tolist()
+
+    meme_col, sib_col, p_col = [], [], []
+
+    for i, meme in enumerate(memes):
+
+        meme_labels = siblings[i].strip("[]'").split("', '")
+
+
+        for j in range(min(5, len(meme_labels))):
+            p_col.append(parents[i])
+            meme_col.append(meme)
+            sib_col.append(meme_labels[j])
+
+
+    mfa = pd.DataFrame()
+    mfa["meme_name"] = meme_col
+    mfa["parent"] = p_col
+    mfa["siblings"] = sib_col
+
+    mfa.to_csv("/opt/airflow/dags/data/import/relations.csv", encoding='utf-8', index=False) 
     
     with graph.session(database="neo4j") as session:
 
         query_main = "LOAD CSV WITH HEADERS FROM file:///relations.csv AS csvLine" \
         "MERGE (p:Meme_parent {parent_name: csvLine.parent})" \
-        "MERGE (c:Meme_children {kids: csvLine.children})" \
         "MERGE (s:Meme_siblings {siblings: csvLine.siblings})" \
         "MERGE (m:Meme_name {meme_name:csvLine.meme_name})" \
-        "CREATE (m)-[:BELONGS_TO]->(p), (m)-[:IS_RELATED_TO]->(s), (m)-[:IS_PARENT_TO]->(c)"
+        "CREATE (m)-[:IS_CHILD_OF]->(p), (m)-[:IS_RELATED_TO]->(s)"
 
         result = session.run(query_main)
 
