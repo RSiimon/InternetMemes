@@ -1,4 +1,4 @@
-CREATE TABLE memes (
+CREATE TABLE IF NOT EXISTS memes (
     meme_id VARCHAR(255) PRIMARY KEY,
     title VARCHAR (255),
     url VARCHAR (255),

@@ -31,83 +31,112 @@ postgres_dag = DAG(
 )
 
 
-def create_meme_query(file, sql_file):
-    df = pd.read_csv(file)
-    with open(sql_file, "w") as f:
-        df_iterable = df.iterrows()
-        f.write(
-            "CREATE TABLE IF NOT EXISTS intavolature (\n"
-            "title VARCHAR(255),\n"
-            "subtitle VARCHAR(255),\n"
-            "key VARCHAR(255),\n"
-            "difficulty VARCHAR(255),\n"
-            "date VARCHAR(255),\n"
-            "ensemble VARCHAR(255));\n"
-        )
-        for index, row in df_iterable:
-            piece = row['Piece']
-            type = row['Type']
-            key = row['Key']
-            difficulty = row['Difficulty']
-            date = row['Date']
-            ensemble = row['Ensemble']
-
-            f.write(
-                "INSERT INTO intavolature VALUES ("
-                f"'{piece}', '{type}', '{key}', '{difficulty}', '{date}', '{ensemble}'"
-                ");\n"
-            )
-
-        f.close()
+def create_meme_table():
+    print("Creating meme table")
 
 
-task_six_a = PythonOperator(
-    task_id='create_intavolature_query',
+create_meme_table = PythonOperator(
+    task_id='create_meme_table',
     dag=postgres_dag,
-    python_callable=create_meme_query,
-    op_kwargs={
-        'file':  data_source_final + 'main_df.csv',
-        'sql_file': sql_source + 'meme_insert.sql'
-    },
+    python_callable=create_meme_table,
     trigger_rule='all_success',
 )
 
-
-def create_memes_query(file):
-    df = pd.read_csv(file)
-    with open("/opt/airflow/dags/sql/composer_inserts.sql", "w") as f:
-        df_iterable = df.iterrows()
-        f.write(
-            "CREATE TABLE IF NOT EXISTS composer (\n"
-            "name VARCHAR(255)\n"
-            ");\n"
-        )
-        for index, row in df_iterable:
-            composer = row['Composer']
-
-            f.write(
-                "INSERT INTO composer VALUES ("
-                f"'{composer}'"
-                ");\n"
-            )
-
-
-task_six_b = PythonOperator(
-    task_id='create_composer_query',
-    dag=postgres_dag,
-    python_callable=create_memes_query,
-    op_kwargs={
-        'previous_epoch': '{{ prev_execution_date.int_timestamp }}',
-        'output_folder': '/opt/airflow/dags',
-    },
-    trigger_rule='all_success',
-)
-
-task_seven_a = PostgresOperator(
-    task_id='insert_intavolature_query',
+insert_into_memes = PostgresOperator(
+    task_id='insert_into_memes',
     dag=postgres_dag,
     postgres_conn_id='postgres_default',
-    sql='intavolature_inserts.sql',
+    sql='sql/memes.sql',
     trigger_rule='all_success',
     autocommit=True
 )
+
+
+def create_authors_table():
+    print("Creating meme table")
+
+
+create_authors_table = PythonOperator(
+    task_id='create_authors_table',
+    dag=postgres_dag,
+    python_callable=create_authors_table,
+    trigger_rule='all_success',
+)
+
+insert_into_authors = PostgresOperator(
+    task_id='insert_into_authors',
+    dag=postgres_dag,
+    postgres_conn_id='postgres_default',
+    sql='sql/authors.sql',
+    trigger_rule='all_success',
+    autocommit=True
+)
+
+
+def create_updaters_table():
+    print("Creating meme table")
+
+
+create_updaters_table = PythonOperator(
+    task_id='create_updaters_table',
+    dag=postgres_dag,
+    python_callable=create_updaters_table,
+    trigger_rule='all_success',
+)
+
+insert_into_updaters = PostgresOperator(
+    task_id='insert_into_updaters',
+    dag=postgres_dag,
+    postgres_conn_id='postgres_default',
+    sql='sql/updaters.sql',
+    trigger_rule='all_success',
+    autocommit=True
+)
+
+
+def create_tags_table():
+    print("Creating meme table")
+
+
+create_tags_table = PythonOperator(
+    task_id='create_tags_table',
+    dag=postgres_dag,
+    python_callable=create_tags_table,
+    trigger_rule='all_success',
+)
+
+insert_into_tags = PostgresOperator(
+    task_id='insert_into_tags',
+    dag=postgres_dag,
+    postgres_conn_id='postgres_default',
+    sql='sql/authors.sql',
+    trigger_rule='all_success',
+    autocommit=True
+)
+
+add_relations = PostgresOperator(
+    task_id='add_relations',
+    dag=postgres_dag,
+    postgres_conn_id='postgres_default',
+    sql='sql/relations.sql',
+    trigger_rule='all_success',
+    autocommit=True
+)
+
+START = DummyOperator(
+    task_id='start_pipeline',
+    dag=postgres_dag
+)
+
+END = DummyOperator(
+    task_id='end_pipeline',
+    dag=postgres_dag
+)
+
+START >> [create_meme_table, create_authors_table, create_updaters_table, create_tags_table]
+create_meme_table >> insert_into_memes
+create_authors_table >> insert_into_authors
+create_updaters_table >> insert_into_updaters
+create_tags_table >> insert_into_tags
+[insert_into_memes, insert_into_authors, insert_into_updaters, insert_into_tags] >> add_relations
+add_relations >> END
